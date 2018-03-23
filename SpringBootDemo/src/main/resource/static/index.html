@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+<script type="text/javascript" src="https://code.jquery.com/jquery-3.3.1.min.js" ></script>
+<script type="text/javascript">
+
+	function getMysqlData(){
+		$.get("/bootdemo/demo/getMysqlData",function(txt){
+			alert(txt);
+		});		
+	}
+
+</script>
+</head>
+<body>
+	这是一个普通的网页
+	<button onclick="getMysqlData()" >获取mysql表数据</button>
+</body>
+</html>
