@@ -28,7 +28,9 @@ public class MyDemoServlet extends HttpServlet
         resp.setContentType("text/html;charset=utf-8");
         DemoServices demo = (DemoServices) WebApplicationContextUtils.getWebApplicationContext(req.getServletContext())
                 .getBean("demoServices");
+        long s = System.nanoTime();
         String messsage = demo.getMesssage("我传什么你就给我什么");
+        System.out.println("耗时：" + (System.nanoTime() - s));
         resp.getWriter().print(messsage);
         resp.getWriter().flush();
         resp.getWriter().close();
