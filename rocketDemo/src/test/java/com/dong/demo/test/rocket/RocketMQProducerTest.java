@@ -7,7 +7,7 @@ public class RocketMQProducerTest
 {
     public static void main(String[] args)
     {
-        String mqNameServer = "127.0.0.1:9876";
+        String mqNameServer = "39.105.15.80:9876";
         // 定义topic
         String mqTopics = "MQ-MSG-TOPICS-TEST";
 

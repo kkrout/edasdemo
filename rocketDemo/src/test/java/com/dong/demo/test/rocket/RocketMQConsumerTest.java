@@ -15,7 +15,7 @@ public class RocketMQConsumerTest
 
     public static void consumer1()
     {
-        String mqNameServer = "127.0.0.1:9876";
+        String mqNameServer = "39.105.15.80:9876";
         // 定义topic
         String mqTopics = "MQ-MSG-TOPICS-TEST";
 
@@ -31,7 +31,7 @@ public class RocketMQConsumerTest
 
     public static void consumer2()
     {
-        String mqNameServer = "127.0.0.1:9876";
+        String mqNameServer = "39.105.15.80:9876";
         // 定义topic
         String mqTopics = "MQ-MSG-TOPICS-TEST";
 
@@ -47,7 +47,7 @@ public class RocketMQConsumerTest
 
     public static void consumer3()
     {
-        String mqNameServer = "127.0.0.1:9876";
+        String mqNameServer = "39.105.15.80:9876";
         // 定义topic
         String mqTopics = "MQ-MSG-TOPICS-TEST";
 

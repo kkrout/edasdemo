@@ -39,6 +39,7 @@ public class RocketMQProducer
         // 服务器名称
         sender.setNamesrvAddr(nameServer);
         sender.setInstanceName(UUID.randomUUID().toString());
+        sender.setVipChannelEnabled(false);
         try
         {
             sender.start();
