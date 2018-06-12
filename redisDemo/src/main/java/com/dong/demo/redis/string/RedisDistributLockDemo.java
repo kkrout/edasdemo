@@ -2,14 +2,12 @@ package com.dong.demo.redis.string;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import com.dong.demo.redis.cluster.RedisClusterFactory;
-
 import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisCluster;
 
 /**
  * string是Redis最基本的数据类型，key就是string类型，最长能存512M，value没有限制，以实际内存为主
@@ -43,21 +41,20 @@ public class RedisDistributLockDemo
      * @return
      * @throws IOException
      */
-    public static boolean getLock(String key, int timeout) throws IOException
+    public static boolean getLock(String key, String v, int timeout) throws IOException
     {
         /**
          * 这里使用redis集群方式
          * 如不适用集群则使用注释的代码
          */
-        // try (Jedis j = new Jedis("localhost", 10001))
-        try (JedisCluster j = RedisClusterFactory.getJedisCluster())
+        try (Jedis j = new Jedis("localhost", 10001))
+        // try (JedisCluster j = RedisClusterFactory.getJedisCluster())
         {
             // 访问redis原子性
-            String result = j.set(key, "1", SET_IF_NOT_EXIST, SET_WITH_EXPIRE_TIME, timeout);
+            String result = j.set(key, v, SET_IF_NOT_EXIST, SET_WITH_EXPIRE_TIME, timeout);
             if (RELEASE_SUCCESS.equals(result))
             {
-                System.out.println("获取到锁:" + Thread.currentThread().getName());
-                j.setex(key, timeout, "1");
+                // System.out.println("获取到锁:" + Thread.currentThread().getName());
                 return true;
             }
             else
@@ -67,64 +64,52 @@ public class RedisDistributLockDemo
         }
     }
 
-    public static boolean getLock2(Jedis j, String key, int timeout)
+    public static boolean waitLock(String key, String v) throws IOException
     {
-        // 访问redis原子性
-        String result = j.set(key, "1", SET_IF_NOT_EXIST, SET_WITH_EXPIRE_TIME, timeout);
-        if (RELEASE_SUCCESS.equals(result))
+        while (true)
         {
-            System.out.println("获取到锁:" + Thread.currentThread().getName());
-            j.setex(key, timeout, "1");
-            return true;
-        }
-        else
-        {
-            return false;
-        }
-    }
-
-    public static void waitLock() throws IOException
-    {
-        boolean hasLock = false;
-        String key = "LOCKER";
-        try
-        {
-            while (true)
+            // 重试获取锁
+            if (RedisDistributLockDemo.getLock(key, v, 10000))
             {
-                // 重试获取锁
-                if (RedisDistributLockDemo.getLock(key, 10000))
-                {
-                    hasLock = true;
-                    RedisDistributLockDemo.realseLock(key, 10000);
-                    break;
-                }
-            }
-        }
-        finally
-        {
-            if (hasLock)
-            {
-                RedisDistributLockDemo.realseLock(key, 10000);
+                return true;
             }
         }
     }
 
-    public static boolean realseLock(String key, int timeout) throws IOException
+    public static boolean realseLock(String key, String v) throws IOException
     {
         /**
          * 这里使用redis集群方式
          * 如不适用集群则使用注释的代码
          */
-        // try (Jedis j = new Jedis("localhost", 10001))
-        try (JedisCluster j = RedisClusterFactory.getJedisCluster())
+        try (Jedis j = new Jedis("localhost", 10001))
+        // try (JedisCluster j = RedisClusterFactory.getJedisCluster())
         {
             String script = "if redis.call('get', KEYS[1]) == ARGV[1] then return redis.call('del', KEYS[1]) else return 0 end";
-            Object result = j.eval(script, Collections.singletonList(key), Collections.singletonList("1"));
-            if (RELEASE_SUCCESS.equals(result))
+            Object result = j.eval(script, Collections.singletonList(key), Collections.singletonList(v));
+            if ("1".equals(result))
             {
+                System.out.println(result);
                 return true;
             }
             return false;
+        }
+    }
+
+    public static void realseLock2(String key, String v) throws IOException
+    {
+        /**
+         * 这里使用redis集群方式
+         * 如不适用集群则使用注释的代码
+         */
+        try (Jedis j = new Jedis("localhost", 10001))
+        // try (JedisCluster j = RedisClusterFactory.getJedisCluster())
+        {
+            String value = j.get(key);
+            if (v.equals(value))
+            {
+                j.del(key);
+            }
         }
     }
 
@@ -132,25 +117,25 @@ public class RedisDistributLockDemo
     {
         RedisDistributLockDemo distributLock = new RedisDistributLockDemo();
         ExecutorService threadPool = Executors.newFixedThreadPool(1000);
-        final long start = System.nanoTime();
+        // final long start = System.nanoTime();
 
-        new Thread()
-        {
-            public void run()
-            {
-                try
-                {
-                    latch.await();
-                    System.out.println("验证结果：" + i);
-                }
-                catch (InterruptedException e)
-                {
-                    e.printStackTrace();
-                }
-                System.out.println("运行完成耗时：" + (System.nanoTime() - start));
-
-            };
-        }.start();
+        // new Thread()
+        // {
+        // public void run()
+        // {
+        // try
+        // {
+        // latch.await();
+        // System.out.println("验证结果：" + i);
+        // }
+        // catch (InterruptedException e)
+        // {
+        // e.printStackTrace();
+        // }
+        // System.out.println("运行完成耗时：" + (System.nanoTime() - start));
+        //
+        // };
+        // }.start();
 
         for (int i = 0; i < 100; i++)
         {
@@ -165,18 +150,31 @@ public class RedisDistributLockDemo
         @Override
         public void run()
         {
+            String v = UUID.randomUUID().toString();
             try
             {
-                RedisDistributLockDemo.waitLock();
-                System.out.println(Thread.currentThread().getName() + "正在处理数据。。。");
+                RedisDistributLockDemo.waitLock("LOCKER", v);
+                Thread.sleep((int) (Math.random() * 100));
                 i++;
-                Thread.sleep((int) (Math.random() * 5000));
+                System.out.println(i);
             }
             catch (Exception e)
             {
                 e.printStackTrace();
             }
-            latch.countDown();
+            finally
+            {
+                try
+                {
+                    RedisDistributLockDemo.realseLock2("LOCKER", v);
+                }
+                catch (IOException e)
+                {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            }
+            // latch.countDown();
         }
 
     }

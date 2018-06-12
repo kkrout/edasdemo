@@ -14,7 +14,7 @@ public class MainDemo
     public static void main(String[] args)
     {
 
-        ExecutorService threadPool = Executors.newFixedThreadPool(1000);
+        ExecutorService threadPool = Executors.newFixedThreadPool(10);
         final long start = System.nanoTime();
 
         new Thread()

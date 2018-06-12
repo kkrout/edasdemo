@@ -2,6 +2,7 @@ package com.dong.springcoud.demo;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 
 import com.taobao.pandora.boot.PandoraBootstrap;
 
@@ -13,6 +14,7 @@ import com.taobao.pandora.boot.PandoraBootstrap;
  * @since JDK1.8
  */
 @SpringBootApplication
+@EnableDiscoveryClient
 public class ServerApplication
 {
     public static void main(String[] args)

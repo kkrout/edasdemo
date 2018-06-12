@@ -30,6 +30,7 @@ public class BaseDistributedLock
     private void deleteOurPath(String ourPath) throws Exception
     {
         client.delete(ourPath);
+        client.close();
     }
 
     private String createLockNode(ZkClient client, String path) throws Exception
