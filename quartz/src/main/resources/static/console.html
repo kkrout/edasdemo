@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet"
+	href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
+<script src="js/angular.min.js"></script>
+<script src="https://cdn.bootcss.com/jquery/2.1.1/jquery.min.js"></script>
+<script
+	src="https://cdn.bootcss.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+<style type="text/css" >
+.img-status{
+width:30px;
+height:30px;
+}
+.hide{
+	display: none;
+}
+</style>
+</head>
+<body ng-app="scheduleConfig" ng-controller="scheduleConfigCtrl">
+	<div class="container">
+		<h3>Schedule Config</h3>
+		<hr>
+		<button class="btn btn-success" data-toggle="modal"
+			data-target="#myModal">
+			<span class="glyphicon"></span>创建调度
+		</button>
+		<hr>
+		<table class="table table-striped">
+			<thead>
+				<tr>
+					<th></th>
+					<th>group</th>
+					<th>name</th>
+					<th>Task Class</th>
+					<th>Cron Expression</th>
+					<th>Status</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr ng-repeat="row in configs">
+					<td>
+						<div class="btn-group">
+					    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">操作
+					        <span class="caret"></span>
+					    </button>
+					    <ul class="dropdown-menu">
+					        <li><a href="#" ng-click="toedit($index)" >编辑</a></li>
+					        <li><a href="#" ng-if="!row.state || row.state == 'NONE' " ng-click='startJob(row.targetClass,row.group)' >启动</a></li>
+					        <li><a href="#" ng-if="row.state == 'NORMAL'" ng-click="pausejob(row.targetClass,row.group)" >挂起</a></li>
+					        <li><a href="#" ng-if="row.state == 'PAUSED'" ng-click="resumejob(row.targetClass,row.group)" >唤醒</a></li>
+					        <li><a href="#" ng-if="row.state" ng-click="stopjob(row.targetClass,row.group)" >停止</a></li>
+					        <li><a href="#" ng-if="row.state" ng-click="deletejob(row.targetClass,row.group)" >删除</a></li>
+					    </ul>
+					    </div>
+					</td>
+					<td>{{ row.group }}</td>
+					<td>{{ row.name }}</td>
+					<td>{{ row.targetClass }}</td>
+					<td>
+						<span ng-if="$index != editIndex" >{{ row.cron }}</span>
+						<input ng-if="$index == editIndex" type="text" ng-model="row.cron"
+									ng-disabled="!edit" ng-blur="saveEdit($index)" ng-trim >
+					</td>
+					<td>
+						<img class="img-status" title="{{ row.state }}" ng-if="row.state == 'NORMAL'" src="images/start.png" />
+						<img class="img-status" title="{{ row.state }}" ng-if="!row.state || row.state == 'NONE' " src="images/stop.png" />
+						<img class="img-status" title="{{ row.state }}" ng-if="row.state == 'PAUSED'" src="images/suppend.png" />
+					</td>
+				</tr>
+				
+			</tbody>
+		</table>
+	</div>
+	<div id="myErrorAlert" class="alert alert-danger" style="position:absolute;top:20px;left:50%;width:300px;margin-left:-150px;word-break: break-all;word-wrap: break-word;display:none;" >
+	    <a href="#" class="close" data-dismiss="alert">
+	    </a>
+	    {{errorMessage}}
+	</div>
+	<!-- 模态框（Modal） -->
+	<div class="modal fade" id="myModal" tabindex="-1" role="dialog"
+		aria-labelledby="myModalLabel" aria-hidden="true">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal"
+						aria-hidden="true">×</button>
+					<h4 class="modal-title" id="myModalLabel">创建调度</h4>
+				</div>
+				<div class="modal-body">
+					<form class="form-horizontal">
+						<div class="form-group">
+							<label class="col-sm-2 control-label">名称:</label>
+							<div class="col-sm-10">
+								<input type="text" class="form-control" ng-model="createData.name"
+									ng-disabled="!edit" placeholder="名称">
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="col-sm-2 control-label">目标类:</label>
+							<div class="col-sm-10">
+								<select class="form-control" ng-model="createData.targetClass" 
+								 ng-disabled="!edit"  placeholder="目标类" >
+									<option ng-repeat="option in jobClassList" >{{option }}</option>
+								</select>
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="col-sm-2 control-label">组:</label>
+							<div class="col-sm-10">
+								<input type="text" class="form-control" ng-model="createData.group"
+									ng-disabled="!edit" placeholder="组">
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="col-sm-2 control-label">表达式:</label>
+							<div class="col-sm-10">
+								<input type="text" class="form-control" ng-model="createData.cron"
+									ng-disabled="!edit" placeholder="表达式">
+							</div>
+						</div>
+					</form>
+				</div>
+				<div class="modal-footer">
+					<button type="button" ng-click="cleanData()" class="btn btn-default" data-dismiss="modal">关闭
+					</button>
+					<button type="button" class="btn btn-primary"
+						ng-click="createScheduler()">提交</button>
+				</div>
+			</div>
+			<!-- /.modal-content -->
+		</div>
+		<!-- /.modal-dialog -->
+	</div>
+	<!-- /.modal -->
+	<script type="text/javascript">
+	var app = angular.module('scheduleConfig',[]).controller(
+				'scheduleConfigCtrl',
+				function($scope, $http) {
+					$scope.fName = '';
+					$scope.lName = '';
+					$scope.passw1 = '';
+					$scope.passw2 = '';
+					$scope.edit = true;
+					$scope.error = false;
+					$scope.incomplete = false;
+
+					$http({
+						method : "get",
+						url : '/quartz/job/list'
+					}).then(function successCallback(res) {
+						// 请求成功执行代码
+						$scope.configs = res.data;
+					}, function errorCallback(response) {
+						// 请求失败执行代码
+					});
+					
+					//加载类列表
+					$http({
+						method:"get",
+						url:"/quartz/job/jobClassList"
+					}).then(function successCallback(res) {
+						// 请求成功执行代码
+						$scope.jobClassList = res.data;
+					}, function errorCallback(response) {
+						// 请求失败执行代码
+					});
+					
+					$scope.cleanData = function(){
+						$scope.createData = null;
+					}
+					
+					$scope.openErrorAlert = function(msg){
+						$scope.errorMessage = msg;
+						$('#myErrorAlert').fadeIn('fast',function(){
+							$(this).fadeOut(2000);
+						});
+					}
+
+					$scope.startJob = function(targetClass,group) {
+						$http({method : "POST",
+								url : "/quartz/job/runjob?"+"targetClass="+targetClass+"&group="+group
+						})
+						.then(function successCallback(res) {
+							// 请求成功执行代码
+							if ( res && res.status == "ERROR"){
+								return;
+							}
+							$http({
+								method : "get",
+								url : '/quartz/job/list'
+							}).then(function successCallback(res) {
+								// 请求成功执行代码
+								if ( res && res.status == "ERROR"){
+									$scope.openErrorAlert(res.data.error || '操作失败，网络异常');
+									return;
+								}
+								// 请求成功执行代码
+								$scope.configs = res.data;
+							}, function errorCallback(response) {
+								// 请求失败执行代码
+							})
+						}, function errorCallback(response) {
+							// 请求失败执行代码
+						})
+					};
+					
+					$scope.pausejob = function(targetClass,group) {
+						$http({method : "POST",
+								url : "/quartz/job/pausejob?"+"targetClass="+targetClass+"&group="+group
+						})
+						.then(function successCallback(res) {
+							// 请求成功执行代码
+							if ( res && res.status == "ERROR"){
+								$scope.openErrorAlert(res.data.error || '操作失败，网络异常');
+								return;
+							}
+							$http({
+								method : "get",
+								url : '/quartz/job/list'
+							}).then(function successCallback(res) {
+								// 请求成功执行代码
+								$scope.configs = res.data;
+							}, function errorCallback(response) {
+								// 请求失败执行代码
+							})
+						}, function errorCallback(response) {
+							// 请求失败执行代码
+						})
+					};
+					
+					$scope.resumejob = function(targetClass,group) {
+						$http({method : "POST",
+								url : "/quartz/job/resumejob?"+"targetClass="+targetClass+"&group="+group
+						})
+						.then(function successCallback(res) {
+							// 请求成功执行代码
+							if ( res && res.status == "ERROR"){
+								return;
+							}
+							$http({
+								method : "get",
+								url : '/quartz/job/list'
+							}).then(function successCallback(res) {
+								// 请求成功执行代码
+								if ( res && res.status == "ERROR"){
+									$scope.openErrorAlert(res.data.error || '操作失败，网络异常');
+									return;
+								}
+								// 请求成功执行代码
+								$scope.configs = res.data;
+							}, function errorCallback(response) {
+								// 请求失败执行代码
+							})
+						}, function errorCallback(response) {
+							// 请求失败执行代码
+						})
+					};
+					
+					$scope.deletejob = function(targetClass,group) {
+						$http({method : "POST",
+								url : "/quartz/job/deletejob?"+"targetClass="+targetClass+"&group="+group
+						})
+						.then(function successCallback(res) {
+							// 请求成功执行代码
+							if ( res && res.status == "ERROR"){
+								$scope.openErrorAlert(res.data.error || '操作失败，网络异常');
+								return;
+							}
+							$http({
+								method : "get",
+								url : '/quartz/job/list'
+							}).then(function successCallback(res) {
+								// 请求成功执行代码
+								$scope.configs = res.data;
+							}, function errorCallback(response) {
+								// 请求失败执行代码
+							})
+						}, function errorCallback(response) {
+							// 请求失败执行代码
+						})
+					};
+					
+					$scope.stopjob = function(targetClass,group) {
+						$http({method : "POST",
+								url : "/quartz/job/stopjob?"+"targetClass="+targetClass+"&group="+group
+						})
+						.then(function successCallback(res) {
+							// 请求成功执行代码
+							if ( res && res.status == "ERROR"){
+								$scope.openErrorAlert(res.data.error || '操作失败，网络异常');
+								return;
+							}
+							$http({
+								method : "get",
+								url : '/quartz/job/list'
+							}).then(function successCallback(res) {
+								// 请求成功执行代码
+								$scope.configs = res.data;
+							}, function errorCallback(response) {
+								// 请求失败执行代码
+							})
+						}, function errorCallback(response) {
+							// 请求失败执行代码
+						})
+					};
+
+					$scope.createScheduler = function() {
+						$http.post("/quartz/job/addjob", $scope.createData)
+								.then(function successCallback(res) {
+									// 请求成功执行代码
+									$('#myModal').modal('hide');
+									$http({
+										method : "get",
+										url : '/quartz/job/list'
+									}).then(function successCallback(res) {
+										// 请求成功执行代码
+										if ( res && res.status == "ERROR"){
+											$scope.openErrorAlert(res.data.error || '操作失败，网络异常');
+											return;
+										}
+										// 请求成功执行代码
+										$scope.configs = res.data;
+									}, function errorCallback(response) {
+										// 请求失败执行代码
+									})
+								}, function errorCallback(response) {
+									// 请求失败执行代码
+								})
+					}
+					
+					$scope.toedit = function(idx){
+						$scope.editIndex = idx;
+						$scope.sourceData =  $.extend({}, $scope.configs[idx]);
+					}
+					
+					$scope.saveEdit = function(idx){
+						var rowData = $scope.configs[idx];
+						
+						if ( rowData.cron == $scope.sourceData.cron ){
+							$scope.editIndex = undefined;
+							return;
+						}
+						
+						$http.post("/quartz/job/reschedulejob", rowData)
+						.then(function successCallback(res) {
+							if ( res.data.status == "OK" ){
+								
+							}else{
+								$scope.openErrorAlert(res.data.error || '操作失败，网络异常');
+								//还原数据
+								$.extend(rowData, $scope.sourceData);
+							}
+							$scope.editIndex = undefined;
+						}, function errorCallback(response) {
+							// 请求失败执行代码
+							$scope.openErrorAlert(JSON.stringify(response));
+							//还原数据
+							$.extend(rowData, $scope.sourceData);
+							$scope.editIndex = undefined;
+						})						
+					}
+
+				});
+	</script>
+</body>
+</html>
