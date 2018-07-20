@@ -1,8 +1,14 @@
 package com.dong.buddy.mongo.entity;
 
+import com.dong.buddy.advice.AutoIncKey;
+import lombok.Data;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Field;
+
 import java.io.Serializable;
 import java.util.Date;
 
+@Data
 public class BaseEntity implements Serializable
 {
 
@@ -13,38 +19,11 @@ public class BaseEntity implements Serializable
      */
     private static final long serialVersionUID = 1L;
 
-    private String id;
-    private Date createDate;
-    private Date lastUpdateDate;
+    @Field
+    private String createDate;
 
-    public String getId()
-    {
-        return id;
-    }
+    @Field
+    private String lastUpdateDate;
 
-    public void setId(String id)
-    {
-        this.id = id;
-    }
-
-    public Date getCreateDate()
-    {
-        return createDate;
-    }
-
-    public void setCreateDate(Date createDate)
-    {
-        this.createDate = createDate;
-    }
-
-    public Date getLastUpdateDate()
-    {
-        return lastUpdateDate;
-    }
-
-    public void setLastUpdateDate(Date lastUpdateDate)
-    {
-        this.lastUpdateDate = lastUpdateDate;
-    }
 
 }

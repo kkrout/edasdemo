@@ -53,7 +53,7 @@ public class ControllerExceptionAdvice
     @ExceptionHandler(value = Exception.class)
     public ExceptionResult errorHandler(Exception ex, HttpServletResponse reponse)
     {
-        // reponse.setStatus(500);
+        reponse.setStatus(500);
         if (ex instanceof ICommonExpcetion)
         {
             ICommonExpcetion comEx = (ICommonExpcetion) ex;

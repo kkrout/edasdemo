@@ -15,8 +15,7 @@
 		"connectionMinimumIdleSize": 32,
 		"connectionPoolSize": 64,
 		"database": 0,
-		"dnsMonitoringInterval": 5000,
-		"password":"admin123"
+		"dnsMonitoringInterval": 5000
 	},
 	"threads": 0,
 	"nettyThreads": 0,

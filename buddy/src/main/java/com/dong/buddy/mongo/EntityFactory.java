@@ -17,9 +17,8 @@ public abstract class EntityFactory
         {
             T entity = cls.newInstance();
             Date date = new Date();
-            entity.setId(UUIDUtil.getId());
-            entity.setCreateDate(date);
-            entity.setLastUpdateDate(date);
+            entity.setCreateDate(UUIDUtil.getTimeId());
+            entity.setLastUpdateDate(UUIDUtil.getTimeId());
             return entity;
         }
         catch (Exception e)
@@ -28,6 +27,9 @@ public abstract class EntityFactory
             return null;
         }
     }
+
+
+
 
     public static void main(String[] args)
     {

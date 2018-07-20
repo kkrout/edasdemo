@@ -7,6 +7,8 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter
 
 import com.dong.buddy.interceptor.LoginInterceptor;
 
+import java.math.BigDecimal;
+
 @Configuration
 public class WebMvcConfig extends WebMvcConfigurerAdapter
 {
@@ -20,5 +22,9 @@ public class WebMvcConfig extends WebMvcConfigurerAdapter
     public void addInterceptors(InterceptorRegistry registry)
     {
         registry.addInterceptor(new LoginInterceptor()).addPathPatterns("/api/*/");
+    }
+
+    public static void main(String[] args) {
+        System.out.println(new BigDecimal(1001).divide(new BigDecimal(5)).intValue());
     }
 }

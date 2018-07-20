@@ -20,7 +20,7 @@ public class BuddyApplication
         SpringApplication.run(BuddyApplication.class, args);
         // MyGateway gateway = context.getBean(MyGateway.class);
         // gateway.sendToMqtt("foo");
-        LockSupport.park();
+//        LockSupport.park();
     }
 
     @Bean

@@ -47,7 +47,6 @@ public class LoginInterceptor implements HandlerInterceptor
         {
             resp.sendRedirect("/html/login.html");
         }
-
         return false;
     }
 
